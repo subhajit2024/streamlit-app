@@ -1,7 +1,8 @@
 import streamlit as st
 import joblib
 import numpy as np
-from pathlib import Path
+# pathlib is no longer needed since we are loading directly by filename
+# from pathlib import Path 
 
 # Set page config
 st.set_page_config(
@@ -10,10 +11,16 @@ st.set_page_config(
     layout="centered"
 )
 
-# Load models
-MODEL_PATH = Path(__file__).parent / "models"
-model = joblib.load(MODEL_PATH / "model.pkl")
-scaler = joblib.load(MODEL_PATH / "scaler.pkl")
+# --- Load models ---
+# Files (model.pkl, scaler.pkl) are in the root directory, 
+# so we load them directly by filename.
+try:
+    model = joblib.load("model.pkl")
+    scaler = joblib.load("scaler.pkl")
+except FileNotFoundError:
+    st.error("Error: Model files not found. Ensure 'model.pkl' and 'scaler.pkl' are in the root of your repository.")
+    st.stop()
+# --------------------
 
 # Page title
 st.title("Sleep Health Pattern Predictor")
@@ -52,12 +59,18 @@ if st.button("Predict Pattern"):
     input_data = np.array([[social_media, gaming_hours, personality]])
     
     # Get cluster and distance
-    cluster = model.predict(input_data)[0]
+    # Note: If your model requires scaled data before prediction, you must 
+    # scale input_data here: input_data_scaled = scaler.transform(input_data)
+    
+    # Assuming your model handles unscaled input for now, but usually scaling is required
+    cluster = model.predict(input_data)[0] 
     distances = model.transform(input_data)
     distance_to_center = distances[0][cluster]
     
     # Scale distance
-    normalized_distance = scaler.transform([[distance_to_center]])[0][0]
+    # Note: If your scaler was fit on multi-feature data, this single-feature scaling 
+    # may need adjustment, but we keep it based on your original code's logic.
+    normalized_distance = scaler.transform([[distance_to_center]])[0][0] 
     
     # Display results
     st.subheader("Results")
